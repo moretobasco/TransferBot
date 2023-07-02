@@ -1,29 +1,23 @@
 import asyncio
+
+from aiogram import Bot, Dispatcher
+from config_data.config_bot import BotConfig, load_bot_config
 import asyncpg
 from config_data.config_db import DBConfig, load_db_config
 from db.db_work import create_table
+from handlers import test_handler
 
 
-async def work_with_db():
-    # Установка соединения с базой данных
-    db_config: DBConfig = load_db_config()
-    db_user = db_config.db_user
-    db_password = db_config.db_password
-    db_database = db_config.db_database
-    db_host = db_config.db_host
-    db_port = db_config.db_port
+async def main():
 
-    conn = await asyncpg.connect(
-        user=db_user,
-        password=db_password,
-        database=db_database,
-        host=db_host,
-        port=db_port
-    )
+    bot_config: BotConfig = load_bot_config()
+    bot: Bot = Bot(token=bot_config.tg_bot.token)
+    dp: Dispatcher = Dispatcher()
 
-    await create_table(conn=conn)
+    dp.include_router(test_handler.router)
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot)
+
 
 if __name__ == '__main__':
-    asyncio.run(work_with_db())
-
-# asyncio.get_event_loop().run_until_complete(work_with_db())
+    asyncio.run(main())
